@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>主持人後台</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">主持人後台</p>
+          <h1 id="eventTitle">114學年度第二次家長委員會議</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="primary-button" id="exportButton" type="button">
+            <i data-lucide="download"></i>
+            <span>匯出</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="dashboard-grid">
+        <div class="metric-card">
+          <span>應到總數</span>
+          <strong id="totalExpected">0</strong>
+        </div>
+        <div class="metric-card">
+          <span>目前實到</span>
+          <strong id="verifiedPresent">0</strong>
+        </div>
+        <div class="metric-card">
+          <span>尚未出席</span>
+          <strong id="absentCount">0</strong>
+        </div>
+        <div class="metric-card">
+          <span>出席率</span>
+          <strong id="attendanceRate">0%</strong>
+        </div>
+        <div class="metric-card">
+          <span>重複簽到</span>
+          <strong id="duplicateCount">0</strong>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>即時簽到一覽</h2>
+            <p id="lastUpdated">尚未更新</p>
+          </div>
+          <label class="search-field">
+            <i data-lucide="search"></i>
+            <input id="hostSearchInput" placeholder="搜尋單位、職稱、姓名">
+          </label>
+          <div class="segmented">
+            <button class="segment active" data-filter="all" type="button">全部</button>
+            <button class="segment" data-filter="arrived" type="button">已到</button>
+            <button class="segment" data-filter="absent" type="button">未到</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>單位</th>
+                <th>職稱</th>
+                <th>姓名</th>
+                <th>狀態</th>
+                <th>時間</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="guestTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel table-panel record-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>簽到流水紀錄</h2>
+            <p>最新紀錄會顯示在最上方</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>類型</th>
+                <th>單位</th>
+                <th>職稱</th>
+                <th>姓名</th>
+                <th>簽名</th>
+              </tr>
+            </thead>
+            <tbody id="recordTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="signature-dialog" id="signatureDialog">
+      <div class="dialog-head">
+        <div>
+          <span>簽名檔預覽</span>
+          <strong id="signatureDialogName">-</strong>
+        </div>
+        <button class="icon-button" id="closeSignatureDialog" type="button" title="關閉">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <img id="signaturePreview" alt="簽名檔預覽">
+        <p id="signatureFallback">這筆紀錄沒有簽名圖檔。</p>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./gas-adapter.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

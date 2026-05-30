@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>來賓簽到</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow" id="modeLabel">簽到模式</p>
+          <h1 id="eventTitle">114學年度第二次家長委員會議</h1>
+        </div>
+      </header>
+
+      <section class="checkin-layout">
+        <form class="panel checkin-panel" id="checkinForm">
+          <div class="auth-warning" id="authWarning" hidden>
+            <i data-lucide="circle-alert"></i>
+            <div>
+              <strong id="authWarningTitle">這個簽到連結已失效</strong>
+              <span id="authWarningBody">請掃描現場最新 QR Code，或向主辦單位確認連結。</span>
+            </div>
+          </div>
+          <div class="panel-heading">
+            <div>
+              <h2>來賓資料</h2>
+              <p id="requiredSummary">姓名與簽名必填</p>
+            </div>
+            <span class="status-pill" id="authStatus">有效連結</span>
+          </div>
+
+          <div class="field-grid">
+            <label class="field" data-field="unit">
+              <span>單位</span>
+              <input id="unitInput" name="unit" list="unitOptions" autocomplete="organization">
+            </label>
+            <label class="field" data-field="title">
+              <span>職稱</span>
+              <input id="titleInput" name="title" list="titleOptions" autocomplete="organization-title">
+            </label>
+            <label class="field wide" data-field="name">
+              <span>姓名</span>
+              <input id="nameInput" name="name" list="nameOptions" autocomplete="name" required>
+            </label>
+            <label class="field" data-field="extra1" hidden>
+              <span id="extra1Label">彈性欄位 1</span>
+              <input id="extra1Input" name="extra1">
+            </label>
+            <label class="field" data-field="extra2" hidden>
+              <span id="extra2Label">彈性欄位 2</span>
+              <input id="extra2Input" name="extra2">
+            </label>
+          </div>
+
+          <datalist id="unitOptions"></datalist>
+          <datalist id="titleOptions"></datalist>
+          <datalist id="nameOptions"></datalist>
+
+          <div class="signature-area" data-field="signature">
+            <div class="signature-header">
+              <span>簽名</span>
+              <button class="ghost-button" id="clearSignatureButton" type="button">
+                <i data-lucide="eraser"></i>
+                <span>清除</span>
+              </button>
+            </div>
+            <canvas id="signatureCanvas" width="900" height="260"></canvas>
+          </div>
+
+          <div class="form-actions">
+            <button class="secondary-button" id="fillSampleButton" type="button">
+              <i data-lucide="wand-2"></i>
+              <span>帶入範例</span>
+            </button>
+            <button class="primary-button submit-button" type="submit">
+              <i data-lucide="check"></i>
+              <span id="submitLabel">完成簽到</span>
+            </button>
+          </div>
+        </form>
+
+        <aside class="panel event-panel checkin-info-panel">
+          <div class="event-meta">
+            <span>活動</span>
+            <strong id="eventNameCard">114學年度第二次家長委員會議</strong>
+          </div>
+          <div class="checkin-note">
+            <i data-lucide="shield-check"></i>
+            <div>
+              <strong>請確認資料後送出</strong>
+              <span>簽名與個人資料只用於本次活動報到紀錄。</span>
+            </div>
+          </div>
+          <div class="checkin-note">
+            <i data-lucide="clock"></i>
+            <div>
+              <strong>送出後會立即完成登錄</strong>
+              <span>主持人後台會即時更新簽到狀態。</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./gas-adapter.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

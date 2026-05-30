@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>活動簽到退系統</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <main class="portal">
+      <section class="portal-hero">
+        <div class="brand">
+          <div class="brand-mark">簽</div>
+          <div>
+            <div class="brand-title">活動簽到退系統</div>
+            <div class="brand-subtitle">獨立網站化原型</div>
+          </div>
+        </div>
+        <h1>三個入口已分開</h1>
+        <p>這一頁是預覽入口。正式部署時，來賓只會拿到簽到頁網址；主持人與管理者會使用各自的後台頁面。</p>
+      </section>
+
+      <section class="portal-grid" aria-label="系統入口">
+        <a class="portal-card" href="./checkin.html">
+          <i data-lucide="pen-line"></i>
+          <span>來賓簽到頁</span>
+          <strong>checkin.html</strong>
+        </a>
+        <a class="portal-card" href="./host.html">
+          <i data-lucide="monitor-dot"></i>
+          <span>主持人後台</span>
+          <strong>host.html</strong>
+        </a>
+        <a class="portal-card" href="./admin.html">
+          <i data-lucide="sliders-horizontal"></i>
+          <span>管理設定頁</span>
+          <strong>admin.html</strong>
+        </a>
+      </section>
+    </main>
+    <script>
+      if (window.lucide) lucide.createIcons();
+    </script>
+  </body>
+</html>

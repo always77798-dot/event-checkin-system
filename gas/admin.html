@@ -1,0 +1,234 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理設定</title>
+    <?!= include('styles'); ?>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="page-header">
+        <a class="back-link" href="<?= webAppUrl ?>?page=admin&token=<?= getSettings().adminToken ?>"><i data-lucide="chevron-left"></i><span>入口</span></a>
+        <div>
+          <p class="eyebrow">管理設定</p>
+          <h1 id="eventTitle">114學年度第二次家長委員會議</h1>
+        </div>
+      </header>
+
+      <form class="panel settings-panel" id="settingsForm">
+        <div class="panel-heading">
+          <div>
+            <h2>活動設定</h2>
+            <p>設定會立即套用到簽到頁與主持人後台</p>
+          </div>
+          <button class="primary-button" type="submit">
+            <i data-lucide="save"></i>
+            <span>儲存</span>
+          </button>
+        </div>
+
+        <div class="settings-grid">
+          <label class="field wide">
+            <span>活動名稱</span>
+            <input id="settingEventName" name="eventName">
+          </label>
+          <label class="field">
+            <span>模式</span>
+            <select id="settingMode" name="mode">
+              <option value="簽到">簽到</option>
+              <option value="簽退">簽退</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>活動狀態</span>
+            <select id="settingIsOpen" name="isOpen">
+              <option value="open">開放簽到</option>
+              <option value="closed">關閉簽到</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>主題色</span>
+            <input id="settingThemeColor" name="themeColor" type="color">
+          </label>
+          <label class="field">
+            <span>必填欄位</span>
+            <input id="settingRequired" name="requiredFields" type="hidden">
+            <div class="check-grid" data-setting-group="required">
+              <label><input type="checkbox" value="unit"> 單位</label>
+              <label><input type="checkbox" value="title"> 職稱</label>
+              <label><input type="checkbox" value="name"> 姓名</label>
+              <label><input type="checkbox" value="signature"> 簽名</label>
+              <label><input type="checkbox" value="extra1"> 彈性欄位 1</label>
+              <label><input type="checkbox" value="extra2"> 彈性欄位 2</label>
+            </div>
+          </label>
+          <label class="field">
+            <span>隱藏欄位</span>
+            <input id="settingHidden" name="hiddenFields" type="hidden">
+            <div class="check-grid" data-setting-group="hidden">
+              <label><input type="checkbox" value="unit"> 單位</label>
+              <label><input type="checkbox" value="title"> 職稱</label>
+              <label><input type="checkbox" value="name"> 姓名</label>
+              <label><input type="checkbox" value="signature"> 簽名</label>
+              <label><input type="checkbox" value="extra1"> 彈性欄位 1</label>
+              <label><input type="checkbox" value="extra2"> 彈性欄位 2</label>
+            </div>
+          </label>
+          <label class="field">
+            <span>驗證碼</span>
+            <div class="inline-control">
+              <input id="settingAuthCode" name="authCode">
+              <button class="icon-button" id="regenerateCodeButton" type="button" title="重新產生驗證碼">
+                <i data-lucide="shuffle"></i>
+              </button>
+            </div>
+          </label>
+          <label class="field">
+            <span>主持人權杖</span>
+            <div class="inline-control">
+              <input id="settingHostToken" name="hostToken">
+              <button class="icon-button" id="regenerateHostTokenButton" type="button" title="重新產生主持人權杖">
+                <i data-lucide="shuffle"></i>
+              </button>
+            </div>
+          </label>
+          <label class="field">
+            <span>管理者權杖</span>
+            <div class="inline-control">
+              <input id="settingAdminToken" name="adminToken">
+              <button class="icon-button" id="regenerateAdminTokenButton" type="button" title="重新產生管理者權杖">
+                <i data-lucide="shuffle"></i>
+              </button>
+            </div>
+          </label>
+          <label class="field">
+            <span>彈性欄位 1</span>
+            <input id="settingExtra1" name="extra1Label">
+          </label>
+          <label class="field">
+            <span>彈性欄位 2</span>
+            <input id="settingExtra2" name="extra2Label">
+          </label>
+        </div>
+      </form>
+
+      <section class="panel link-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>發布連結</h2>
+            <p>依目前驗證碼產生簽到頁、主持人頁與 QR Code</p>
+          </div>
+        </div>
+        <div class="link-grid">
+          <article class="link-card">
+            <div>
+              <span>來賓簽到</span>
+              <strong>給現場 QR Code 使用</strong>
+            </div>
+            <img id="checkinQr" alt="來賓簽到 QR Code">
+            <input id="checkinUrl" readonly>
+            <button class="secondary-button copy-button" data-copy-target="checkinUrl" type="button">
+              <i data-lucide="copy"></i>
+              <span>複製</span>
+            </button>
+          </article>
+          <article class="link-card">
+            <div>
+              <span>主持人後台</span>
+              <strong>給主辦端即時查看</strong>
+            </div>
+            <img id="hostQr" alt="主持人後台 QR Code">
+            <input id="hostUrl" readonly>
+            <button class="secondary-button copy-button" data-copy-target="hostUrl" type="button">
+              <i data-lucide="copy"></i>
+              <span>複製</span>
+            </button>
+          </article>
+          <article class="link-card">
+            <div>
+              <span>管理設定</span>
+              <strong>只給系統管理者保留</strong>
+            </div>
+            <img id="adminQr" alt="管理設定 QR Code">
+            <input id="adminUrl" readonly>
+            <button class="secondary-button copy-button" data-copy-target="adminUrl" type="button">
+              <i data-lucide="copy"></i>
+              <span>複製</span>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel import-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>名單匯入</h2>
+            <p>每行一位，格式：單位,職稱,姓名。也可直接貼上試算表三欄資料。</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary-button" id="clearRecordsButton" type="button">
+              <i data-lucide="trash-2"></i>
+              <span>清空紀錄</span>
+            </button>
+            <button class="primary-button" id="importGuestButton" type="button">
+              <i data-lucide="upload"></i>
+              <span>匯入名單</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="guestImportText" rows="7" spellcheck="false" placeholder="新北市土城國小家長會,會長,朱威丞&#10;新北市土城國小家長會,副會長,許智銘&#10;新北市土城國小,校長,謝芳儒"></textarea>
+      </section>
+
+      <section class="panel backup-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>備份與還原</h2>
+            <p>匯出或貼上整包 JSON，包含設定、名單、簽到紀錄與簽名圖。</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary-button" id="exportBackupButton" type="button">
+              <i data-lucide="file-down"></i>
+              <span>匯出備份</span>
+            </button>
+            <button class="primary-button" id="restoreBackupButton" type="button">
+              <i data-lucide="file-up"></i>
+              <span>還原</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="backupText" rows="6" spellcheck="false" placeholder="在這裡貼上先前匯出的 JSON 備份內容"></textarea>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>名單</h2>
+            <p id="guestCountLabel">0 位</p>
+          </div>
+          <button class="secondary-button" id="addGuestButton" type="button">
+            <i data-lucide="user-plus"></i>
+            <span>新增</span>
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>單位</th>
+                <th>職稱</th>
+                <th>姓名</th>
+              </tr>
+            </thead>
+            <tbody id="settingsGuestTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <?!= include('gas-adapter'); ?>
+    <?!= include('app'); ?>
+  </body>
+</html>
+

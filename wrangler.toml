@@ -1,0 +1,8 @@
+name = "event-checkin-system"
+compatibility_date = "2026-05-30"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "event-checkin-system"
+database_id = "replace-with-cloudflare-d1-database-id"
