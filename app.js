@@ -440,8 +440,10 @@ function applySettingsToUi() {
   });
 
   $$("[data-field] input").forEach((input) => {
-    const field = input.closest("[data-field]")?.dataset.field;
-    input.required = field ? requiredFields.includes(field) && !hiddenFields.includes(field) : false;
+    const fieldContainer = input.closest("[data-field]");
+    const field = fieldContainer?.dataset.field;
+    const isFieldVisible = fieldContainer ? !fieldContainer.hidden : false;
+    input.required = field ? requiredFields.includes(field) && !hiddenFields.includes(field) && isFieldVisible : false;
   });
 
   setText("#extra1Label", settings.extra1Label || "彈性欄位 1");
@@ -455,6 +457,36 @@ function applySettingsToUi() {
   setValue("#settingHidden", settings.hiddenFields);
   syncCheckboxGroup("required", settings.requiredFields);
   syncCheckboxGroup("hidden", settings.hiddenFields);
+  
+  // Apply initial disabled states for interactive constraints
+  hiddenList.forEach((field) => {
+    const requiredCheckbox = $(`[data-setting-group="required"] input[value="${field}"]`);
+    if (requiredCheckbox) {
+      requiredCheckbox.checked = false;
+      requiredCheckbox.disabled = true;
+    }
+  });
+  
+  requiredList.forEach((field) => {
+    const hiddenCheckbox = $(`[data-setting-group="hidden"] input[value="${field}"]`);
+    if (hiddenCheckbox) {
+      hiddenCheckbox.checked = false;
+      hiddenCheckbox.disabled = true;
+    }
+  });
+
+  // Permanently check/disable Name Required, and uncheck/disable Name Hidden
+  const nameRequired = $(`[data-setting-group="required"] input[value="name"]`);
+  if (nameRequired) {
+    nameRequired.checked = true;
+    nameRequired.disabled = true;
+  }
+  const nameHidden = $(`[data-setting-group="hidden"] input[value="name"]`);
+  if (nameHidden) {
+    nameHidden.checked = false;
+    nameHidden.disabled = true;
+  }
+
   setValue("#settingAuthCode", settings.authCode);
   if (settings.hostToken) setValue("#settingHostToken", settings.hostToken);
   if (settings.adminToken || getUrlToken()) setValue("#settingAdminToken", settings.adminToken || getUrlToken());
@@ -967,6 +999,16 @@ function bindEvents() {
       showToast("主持人與管理者權杖不可空白，請重新整理後再儲存");
       return;
     }
+    
+    // Check if tokens have changed from current active session token
+    const currentToken = getUrlToken();
+    const hasAdminTokenChanged = adminToken !== currentToken && currentToken.startsWith("admin-");
+    if (hasAdminTokenChanged) {
+      if (!confirm("注意：您已變更了「管理者權杖」。儲存設定後，目前連結將會失效，系統會自動使用新權杖重新登入。確定要儲存嗎？")) {
+        return;
+      }
+    }
+    
     setValue("#settingRequired", requiredFields);
     setValue("#settingHidden", hiddenFields);
     try {
@@ -993,6 +1035,30 @@ function bindEvents() {
 
   $$("[data-setting-group] input[type='checkbox']").forEach((input) => {
     input.addEventListener("change", () => {
+      const parentGroup = input.closest("[data-setting-group]").dataset.settingGroup;
+      const otherGroup = parentGroup === "hidden" ? "required" : "hidden";
+      
+      const otherCheckbox = $(`[data-setting-group="${otherGroup}"] input[value="${input.value}"]`);
+      if (otherCheckbox) {
+        if (input.checked) {
+          otherCheckbox.checked = false;
+          otherCheckbox.disabled = true;
+        } else {
+          otherCheckbox.disabled = false;
+        }
+      }
+      
+      const nameRequired = $(`[data-setting-group="required"] input[value="name"]`);
+      if (nameRequired) {
+        nameRequired.checked = true;
+        nameRequired.disabled = true;
+      }
+      const nameHidden = $(`[data-setting-group="hidden"] input[value="name"]`);
+      if (nameHidden) {
+        nameHidden.checked = false;
+        nameHidden.disabled = true;
+      }
+
       const hiddenFields = readCheckboxGroup("hidden");
       setValue("#settingRequired", subtractCsv(readCheckboxGroup("required"), hiddenFields));
       setValue("#settingHidden", hiddenFields);
@@ -1005,13 +1071,17 @@ function bindEvents() {
   });
 
   $("#regenerateHostTokenButton")?.addEventListener("click", () => {
-    setValue("#settingHostToken", `host-${generateAuthCode()}${generateAuthCode()}`);
-    showToast("已產生新主持人權杖，記得儲存設定");
+    if (confirm("警告：變更主持人權杖後，舊的主持人後台連結將會失效，需要重新分享新連結。確定要重新產生嗎？")) {
+      setValue("#settingHostToken", `host-${generateAuthCode()}${generateAuthCode()}`);
+      showToast("已產生新主持人權杖，記得儲存設定");
+    }
   });
 
   $("#regenerateAdminTokenButton")?.addEventListener("click", () => {
-    setValue("#settingAdminToken", `admin-${generateAuthCode()}${generateAuthCode()}`);
-    showToast("已產生新管理者權杖，記得儲存設定");
+    if (confirm("警告：變更管理者權杖後，目前的管理頁連結將會失效。您必須使用儲存後產生的新連結重新進入。確定要重新產生嗎？")) {
+      setValue("#settingAdminToken", `admin-${generateAuthCode()}${generateAuthCode()}`);
+      showToast("已產生新管理者權杖，記得儲存設定");
+    }
   });
 
   $("#addGuestButton")?.addEventListener("click", async () => {
