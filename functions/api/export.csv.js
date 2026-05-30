@@ -19,7 +19,7 @@ export async function onRequestGet({ env, request }) {
         record.unit,
         record.title,
         record.name,
-        record.signature,
+        record.signatureType === "manual" ? "手動簽到" : (record.signatureType === "image" ? "有簽名" : "無簽名"),
         record.device,
         record.extra1,
         record.extra2

@@ -98,6 +98,11 @@ const dataService = {
     this.save(normalized);
     return normalized;
   },
+  async getSignature(id) {
+    const nextState = this.load();
+    const record = nextState.records.find((item) => item.id === id);
+    return record ? record.signature : "";
+  },
   reset() {
     localStorage.removeItem(storageKey);
     return this.load();
@@ -106,7 +111,14 @@ const dataService = {
 
 const apiDataService = {
   isAvailable() {
-    return window.location.protocol === "http:" || window.location.protocol === "https:";
+    const isLocalhost = window.location.hostname === "localhost" ||
+                        window.location.hostname === "127.0.0.1" ||
+                        window.location.hostname.endsWith(".local");
+    const hasForceApi = new URLSearchParams(window.location.search).has("api");
+    const isWeb = window.location.protocol === "http:" || window.location.protocol === "https:";
+    
+    if (isLocalhost) return hasForceApi;
+    return isWeb;
   },
   async request(path, options = {}) {
     const response = await fetch(path, {
@@ -182,6 +194,10 @@ const apiDataService = {
       method: "POST",
       body: JSON.stringify({ state: nextState })
     });
+  },
+  async getSignature(id) {
+    const data = await this.request(`/api/records/signature?id=${encodeURIComponent(id)}${this.tokenParam()}`);
+    return data ? data.signature : "";
   },
   reset() {
     return this.replaceAll(seedState);
@@ -348,16 +364,31 @@ function isCheckinAuthorized() {
 }
 
 function getUrlToken() {
-  return new URLSearchParams(window.location.search).get("token") || "";
+  const urlToken = new URLSearchParams(window.location.search).get("token");
+  if (urlToken) {
+    sessionStorage.setItem("auth_token", urlToken);
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("token");
+      window.history.replaceState({}, "", url.toString());
+    }
+    return urlToken;
+  }
+  return sessionStorage.getItem("auth_token") || "";
 }
 
 function updateCurrentTokenUrl() {
   const pageKind = getPageKind();
   const nextToken = pageKind === "admin" ? state.settings.adminToken : pageKind === "host" ? state.settings.hostToken : "";
-  if (!nextToken || nextToken === getUrlToken() || !window.history?.replaceState) return;
-  const url = new URL(window.location.href);
-  url.searchParams.set("token", nextToken);
-  window.history.replaceState({}, "", url.toString());
+  if (!nextToken) return;
+  
+  sessionStorage.setItem("auth_token", nextToken);
+  
+  if (window.history && window.history.replaceState) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("token");
+    window.history.replaceState({}, "", url.toString());
+  }
 }
 
 function getPageKind() {
@@ -521,8 +552,8 @@ function renderRecordTable() {
     .reverse();
 
   setHtml("#recordTableBody", rows.length ? rows.map((row) => {
-    const hasSignature = row.signature && row.signature !== "Host-Manual-CheckIn";
-    const manual = row.signature === "Host-Manual-CheckIn";
+    const hasSignature = row.signatureType === "image" || (row.signature && row.signature.startsWith("data:image/"));
+    const manual = row.signatureType === "manual" || row.signature === "Host-Manual-CheckIn";
     const isListed = state.guests.some((guest) => guest.name === row.name);
     return `
       <tr>
@@ -775,6 +806,10 @@ function parseGuestImport(text) {
 }
 
 function bindEvents() {
+  $("#successCloseButton")?.addEventListener("click", () => {
+    $("#successOverlay")?.classList.remove("active");
+  });
+
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   $$(".segment").forEach((button) => button.addEventListener("click", () => {
     activeFilter = button.dataset.filter;
@@ -836,7 +871,16 @@ function bindEvents() {
       form.reset();
       $("#clearSignatureButton")?.click();
       renderAll();
-      showToast(`${state.settings.mode}成功`);
+      
+      const successOverlay = $("#successOverlay");
+      if (successOverlay) {
+        $("#successTitle").textContent = `${state.settings.mode}成功！`;
+        $("#successMessage").textContent = `${formData.get("name").trim()}，您的報到手續已順利完成，感謝您的參與。`;
+        successOverlay.classList.add("active");
+        if (window.lucide) lucide.createIcons();
+      } else {
+        showToast(`${state.settings.mode}成功`);
+      }
     } catch (error) {
       showError(error, "簽到失敗");
     }
@@ -855,7 +899,7 @@ function bindEvents() {
     }
   });
 
-  $("#recordTableBody")?.addEventListener("click", (event) => {
+  $("#recordTableBody")?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-signature-index]");
     if (!button) return;
     const record = state.records.find((item) => item.id === button.dataset.signatureIndex);
@@ -864,15 +908,27 @@ function bindEvents() {
     const preview = $("#signaturePreview");
     const fallback = $("#signatureFallback");
     if (preview && fallback) {
-      const previewUrl = normalizeSignaturePreview(record.signature);
-      if (previewUrl) {
-        preview.src = previewUrl;
-        preview.style.display = "block";
-        fallback.style.display = "none";
-      } else {
-        preview.removeAttribute("src");
+      preview.style.display = "none";
+      fallback.style.display = "block";
+      fallback.textContent = "載入簽名檔中...";
+      
+      try {
+        const signature = await getDataService().getSignature(record.id);
+        const previewUrl = normalizeSignaturePreview(signature);
+        if (previewUrl) {
+          preview.src = previewUrl;
+          preview.style.display = "block";
+          fallback.style.display = "none";
+        } else {
+          preview.removeAttribute("src");
+          preview.style.display = "none";
+          fallback.style.display = "block";
+          fallback.textContent = "這筆紀錄沒有簽名圖檔。";
+        }
+      } catch (err) {
         preview.style.display = "none";
         fallback.style.display = "block";
+        fallback.textContent = "載入簽名失敗: " + (err.message || err);
       }
     }
     $("#signatureDialog")?.showModal();
@@ -1078,23 +1134,46 @@ function setupLiveRefresh() {
   }, 5000);
 }
 
+function showLocalModeBanner() {
+  if ($("#localModeBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "localModeBanner";
+  banner.className = "local-mode-banner";
+  banner.innerHTML = `
+    <i data-lucide="wifi-off"></i>
+    <span>目前處於「本機示範/離線模式」，資料將儲存在本機瀏覽器暫存中。</span>
+  `;
+  document.body.prepend(banner);
+  if (window.lucide) lucide.createIcons();
+}
+
 async function initApp() {
+  let isApiOk = false;
   try {
     await loadState();
+    isApiOk = true;
   } catch (error) {
-    if (apiDataService.isAvailable()) {
-      state = normalizeState({
-        ...structuredClone(seedState),
-        access: { role: getPageKind() || "public", authorized: false },
-        loadError: error.message || "資料載入失敗"
-      });
-      showError(error, "資料載入失敗");
+    const service = getDataService();
+    if (service === apiDataService) {
+      console.warn("API 載入失敗，自動切換至本機暫存模式:", error);
+      window.apiDataServiceFailed = true;
+      try {
+        state = normalizeState(await dataService.load());
+        showToast("伺服器連線失敗，已切換至本機暫存模式");
+      } catch (localErr) {
+        state = normalizeState(structuredClone(seedState));
+      }
     } else {
       showError(error, "資料載入失敗，暫時使用本機示範資料");
     }
   }
   setupSignaturePad();
   bindEvents();
+  
+  if (window.apiDataServiceFailed || getDataService() === dataService) {
+    showLocalModeBanner();
+  }
+  
   renderAll();
   setupLiveRefresh();
 }

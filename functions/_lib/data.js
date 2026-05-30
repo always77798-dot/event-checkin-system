@@ -160,9 +160,49 @@ function guestKey_(guest) {
 
 export async function getRecords(DB) {
   const result = await DB.prepare(
-    "SELECT id, timestamp, event_name AS eventName, mode, unit, title, name, signature, ip, device, fingerprint, extra1, extra2 FROM records ORDER BY timestamp"
+    "SELECT id, timestamp, event_name AS eventName, mode, unit, title, name, " +
+    "CASE WHEN signature = 'Host-Manual-CheckIn' THEN 'manual' " +
+    "WHEN signature IS NOT NULL AND signature != '' THEN 'image' " +
+    "ELSE 'none' END AS signatureType, " +
+    "ip, device, fingerprint, extra1, extra2 FROM records ORDER BY timestamp"
   ).all();
   return result.results || [];
+}
+
+export async function getSingleSignature(DB, id) {
+  const row = await DB.prepare("SELECT signature FROM records WHERE id = ?").bind(id).first();
+  return row ? row.signature : "";
+}
+
+export async function replaceRecords(DB, settings, records, request) {
+  const ip = request ? (request.headers.get("cf-connecting-ip") || "") : "";
+  const ua = request ? (request.headers.get("user-agent") || "") : "";
+  const now = new Date().toISOString();
+
+  const inserts = (records || []).map((record) => {
+    const id = String(record.id || crypto.randomUUID());
+    return DB.prepare(
+      `INSERT INTO records
+        (id, timestamp, event_name, mode, unit, title, name, signature, ip, device, fingerprint, extra1, extra2)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      id,
+      String(record.timestamp || now),
+      String(record.eventName || settings.eventName),
+      String(record.mode || settings.mode),
+      String(record.unit || ""),
+      String(record.title || ""),
+      String(record.name || ""),
+      String(record.signature || ""),
+      String(record.ip || ip),
+      String(record.device || ua),
+      String(record.fingerprint || ""),
+      String(record.extra1 || ""),
+      String(record.extra2 || "")
+    );
+  });
+
+  await DB.batch([DB.prepare("DELETE FROM records"), ...inserts]);
 }
 
 export async function addRecord(DB, settings, record, request) {

@@ -5,11 +5,13 @@ import {
   deleteGuest,
   error,
   getRecords,
+  getSingleSignature,
   getSettings,
   getState,
   importGuests,
   readJson,
   replaceGuests,
+  replaceRecords,
   requireAdmin,
   requireHost,
   saveSettings
@@ -109,11 +111,17 @@ async function handleApi(request, env) {
     const nextState = body.state || {};
     const settings = await saveSettings(env.DB, nextState.settings || {});
     await replaceGuests(env.DB, nextState.guests || []);
-    await env.DB.prepare("DELETE FROM records").run();
-    for (const record of nextState.records || []) {
-      await addRecord(env.DB, settings, record, request);
-    }
+    await replaceRecords(env.DB, settings, nextState.records || [], request);
     return Response.json(await getState(env.DB, "admin"));
+  }
+
+  if (request.method === "GET" && path === "/api/records/signature") {
+    const token = url.searchParams.get("token") || "";
+    const id = url.searchParams.get("id") || "";
+    if (!id) return error("缺少紀錄 ID", 400);
+    await requireHost(env.DB, token);
+    const signature = await getSingleSignature(env.DB, id);
+    return Response.json({ id, signature });
   }
 
   if (request.method === "GET" && path === "/api/export.csv") {
@@ -129,7 +137,7 @@ async function handleApi(request, env) {
         record.unit,
         record.title,
         record.name,
-        record.signature,
+        record.signatureType === "manual" ? "手動簽到" : (record.signatureType === "image" ? "有簽名" : "無簽名"),
         record.device,
         record.extra1,
         record.extra2
