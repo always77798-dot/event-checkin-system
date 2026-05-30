@@ -392,6 +392,10 @@ h2 {
   gap: 7px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .field.wide {
   grid-column: 1 / -1;
 }
