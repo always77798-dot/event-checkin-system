@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>來賓簽到</title>
-    <link rel="stylesheet" href="./styles.css?v=20260530-3">
+    <link rel="stylesheet" href="./styles.css?v=20260530-4">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   </head>
   <body>
@@ -102,11 +102,18 @@
               <span>主持人後台會即時更新簽到狀態。</span>
             </div>
           </div>
+          <details class="qr-details">
+            <summary>
+              <i data-lucide="qr-code"></i>
+              <span>顯示本頁 QR Code</span>
+            </summary>
+            <img id="checkinPageQr" alt="本頁 QR Code">
+          </details>
         </aside>
       </section>
     </main>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./gas-adapter.js?v=20260530-3"></script>
-    <script src="./app.js?v=20260530-3"></script>
+    <script src="./gas-adapter.js?v=20260530-4"></script>
+    <script src="./app.js?v=20260530-4"></script>
   </body>
 </html>

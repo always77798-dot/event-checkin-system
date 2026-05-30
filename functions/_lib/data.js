@@ -55,7 +55,9 @@ export async function getSettings(DB) {
 }
 
 export async function saveSettings(DB, settings) {
-  const next = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  const current = await readSettings_(DB);
+  const next = { ...DEFAULT_SETTINGS, ...current, ...(settings || {}) };
+  next.requiredFields = removeHiddenRequiredFields_(next.requiredFields, next.hiddenFields);
   next.isOpen = next.isOpen ? "true" : "false";
   const entries = Object.entries(next).map(([key, value]) => [
     key,
@@ -66,6 +68,27 @@ export async function saveSettings(DB, settings) {
   );
   await DB.batch(statements);
   return getSettings(DB);
+}
+
+async function readSettings_(DB) {
+  const result = await DB.prepare("SELECT key, value FROM settings").all();
+  const settings = {};
+  for (const row of result.results || []) {
+    settings[row.key] = row.value;
+  }
+  return settings;
+}
+
+function parseFieldList_(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function removeHiddenRequiredFields_(requiredFields, hiddenFields) {
+  const hidden = new Set(parseFieldList_(hiddenFields));
+  return parseFieldList_(requiredFields).filter((field) => !hidden.has(field)).join(", ");
 }
 
 export async function getGuests(DB) {

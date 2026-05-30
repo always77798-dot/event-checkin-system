@@ -9,8 +9,8 @@ const seedState = {
     requiredFields: "name, signature",
     hiddenFields: "unit, title",
     authCode: "close",
-    hostToken: "host-change-me",
-    adminToken: "admin-change-me",
+    hostToken: "",
+    adminToken: "",
     extra1Label: "",
     extra2Label: ""
   },
@@ -243,6 +243,11 @@ function readCheckboxGroup(groupName) {
     .join(", ");
 }
 
+function subtractCsv(sourceValue, removeValue) {
+  const remove = new Set(parseList(removeValue));
+  return parseList(sourceValue).filter((field) => !remove.has(field)).join(", ");
+}
+
 function formatTime(dateValue) {
   const date = new Date(dateValue);
   return date.toLocaleTimeString("zh-TW", { hour12: false });
@@ -365,6 +370,11 @@ function applySettingsToUi() {
     const isHiddenBySetting = hiddenFields.includes(key);
     const isEmptyExtra = key === "extra1" && !settings.extra1Label || key === "extra2" && !settings.extra2Label;
     field.hidden = isHiddenBySetting || isEmptyExtra;
+  });
+
+  $$("[data-field] input").forEach((input) => {
+    const field = input.closest("[data-field]")?.dataset.field;
+    input.required = field ? requiredFields.includes(field) && !hiddenFields.includes(field) : false;
   });
 
   setText("#extra1Label", settings.extra1Label || "彈性欄位 1");
@@ -511,9 +521,11 @@ function renderPublishLinks() {
   const checkinQr = $("#checkinQr");
   const hostQr = $("#hostQr");
   const adminQr = $("#adminQr");
+  const checkinPageQr = $("#checkinPageQr");
   if (checkinQr) checkinQr.src = getQrUrl(checkinUrl);
   if (hostQr) hostQr.src = getQrUrl(hostUrl);
   if (adminQr) adminQr.src = getQrUrl(adminUrl);
+  if (checkinPageQr) checkinPageQr.src = getQrUrl(checkinUrl);
 }
 
 function applyPageAccess() {
@@ -585,7 +597,9 @@ async function createRecord({ unit, title, name, extra1 = "", extra2 = "", signa
 
 function validateForm(formData) {
   const requiredFields = parseList(state.settings.requiredFields);
+  const hiddenFields = new Set(parseList(state.settings.hiddenFields));
   for (const key of requiredFields) {
+    if (hiddenFields.has(key)) continue;
     if (key === "signature" && !signatureDirty) return "請完成簽名";
     if (key !== "signature" && !String(formData.get(key) || "").trim()) return "請補齊必填欄位";
   }
@@ -718,11 +732,12 @@ function bindEvents() {
 
   $("#checkinForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (event.currentTarget.dataset.blocked === "true") {
+    const form = event.currentTarget;
+    if (form.dataset.blocked === "true") {
       showToast("簽到連結已失效");
       return;
     }
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const error = validateForm(formData);
     if (error) {
       showToast(error);
@@ -739,7 +754,7 @@ function bindEvents() {
         signature: signatureDirty ? $("#signatureCanvas").toDataURL("image/png") : ""
       });
 
-      event.currentTarget.reset();
+      form.reset();
       $("#clearSignatureButton")?.click();
       renderAll();
       showToast(`${state.settings.mode}成功`);
@@ -791,8 +806,8 @@ function bindEvents() {
   $("#settingsForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const requiredFields = readCheckboxGroup("required");
     const hiddenFields = readCheckboxGroup("hidden");
+    const requiredFields = subtractCsv(readCheckboxGroup("required"), hiddenFields);
     setValue("#settingRequired", requiredFields);
     setValue("#settingHidden", hiddenFields);
     try {
@@ -819,8 +834,9 @@ function bindEvents() {
 
   $$("[data-setting-group] input[type='checkbox']").forEach((input) => {
     input.addEventListener("change", () => {
-      setValue("#settingRequired", readCheckboxGroup("required"));
-      setValue("#settingHidden", readCheckboxGroup("hidden"));
+      const hiddenFields = readCheckboxGroup("hidden");
+      setValue("#settingRequired", subtractCsv(readCheckboxGroup("required"), hiddenFields));
+      setValue("#settingHidden", hiddenFields);
     });
   });
 
@@ -926,6 +942,12 @@ function bindEvents() {
       document.execCommand("copy");
       showToast("連結已複製");
     }
+  }));
+
+  $$(".open-link-button").forEach((button) => button.addEventListener("click", () => {
+    const input = $(`#${button.dataset.openTarget}`);
+    if (!input?.value) return;
+    window.open(input.value, "_blank", "noopener");
   }));
 }
 
