@@ -143,6 +143,8 @@ const apiDataService = {
     const params = new URLSearchParams(window.location.search);
     const page = getPageKind() || params.get("page") || "checkin";
     params.set("page", page);
+    const token = getUrlToken();
+    if (token) params.set("token", token);
     return this.request(`/api/state?${params.toString()}`);
   },
   saveSettings(settings) {
@@ -196,7 +198,9 @@ const apiDataService = {
     });
   },
   async getSignature(id) {
-    const data = await this.request(`/api/records/signature?id=${encodeURIComponent(id)}${this.tokenParam()}`);
+    const token = getUrlToken();
+    const tokenSuffix = token ? `&token=${encodeURIComponent(token)}` : "";
+    const data = await this.request(`/api/records/signature?id=${encodeURIComponent(id)}${tokenSuffix}`);
     return data ? data.signature : "";
   },
   reset() {
