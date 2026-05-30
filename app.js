@@ -314,6 +314,15 @@ function getUrlToken() {
   return new URLSearchParams(window.location.search).get("token") || "";
 }
 
+function updateCurrentTokenUrl() {
+  const pageKind = getPageKind();
+  const nextToken = pageKind === "admin" ? state.settings.adminToken : pageKind === "host" ? state.settings.hostToken : "";
+  if (!nextToken || nextToken === getUrlToken() || !window.history?.replaceState) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set("token", nextToken);
+  window.history.replaceState({}, "", url.toString());
+}
+
 function getPageKind() {
   const path = window.location.pathname.toLowerCase();
   if (path.endsWith("host.html")) return "host";
@@ -800,6 +809,7 @@ function bindEvents() {
         extra1Label: formData.get("extra1Label"),
         extra2Label: formData.get("extra2Label")
       }));
+      updateCurrentTokenUrl();
       renderAll();
       showToast("設定已儲存");
     } catch (error) {
@@ -940,7 +950,16 @@ async function initApp() {
   try {
     await loadState();
   } catch (error) {
-    showError(error, "資料載入失敗，暫時使用本機示範資料");
+    if (apiDataService.isAvailable()) {
+      state = normalizeState({
+        ...structuredClone(seedState),
+        access: { role: getPageKind() || "public", authorized: false },
+        loadError: error.message || "資料載入失敗"
+      });
+      showError(error, "資料載入失敗");
+    } else {
+      showError(error, "資料載入失敗，暫時使用本機示範資料");
+    }
   }
   setupSignaturePad();
   bindEvents();
