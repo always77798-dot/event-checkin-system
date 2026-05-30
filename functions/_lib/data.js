@@ -43,6 +43,9 @@ export function publicSettings(settings, role = "public") {
 
 export async function getSettings(DB) {
   const result = await DB.prepare("SELECT key, value FROM settings").all();
+  if (!result.results || result.results.length === 0) {
+    return saveSettings(DB, DEFAULT_SETTINGS);
+  }
   const settings = { ...DEFAULT_SETTINGS };
   for (const row of result.results || []) {
     settings[row.key] = row.value;

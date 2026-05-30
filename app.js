@@ -9,8 +9,8 @@ const seedState = {
     requiredFields: "name, signature",
     hiddenFields: "unit, title",
     authCode: "close",
-    hostToken: "host-" + Math.random().toString(36).slice(2, 10),
-    adminToken: "admin-" + Math.random().toString(36).slice(2, 10),
+    hostToken: "host-change-me",
+    adminToken: "admin-change-me",
     extra1Label: "",
     extra2Label: ""
   },
