@@ -52,13 +52,32 @@ const dataService = {
   },
   importGuests(guests) {
     const nextState = this.load();
-    nextState.guests = guests;
+    const seen = new Set(nextState.guests.map(guestKey));
+    guests.forEach((guest) => {
+      if (!guest.name) return;
+      const key = guestKey(guest);
+      if (seen.has(key)) return;
+      seen.add(key);
+      nextState.guests.push(guest);
+    });
     this.save(nextState);
     return nextState;
   },
   addGuest(guest) {
     const nextState = this.load();
-    nextState.guests.push(guest);
+    if (!nextState.guests.some((item) => guestKey(item) === guestKey(guest))) nextState.guests.push(guest);
+    this.save(nextState);
+    return nextState;
+  },
+  deleteGuest(guest) {
+    const nextState = this.load();
+    nextState.guests = nextState.guests.filter((item) => guestKey(item) !== guestKey(guest));
+    this.save(nextState);
+    return nextState;
+  },
+  clearGuests() {
+    const nextState = this.load();
+    nextState.guests = [];
     this.save(nextState);
     return nextState;
   },
@@ -131,6 +150,15 @@ const apiDataService = {
       method: "POST",
       body: JSON.stringify({ guest })
     });
+  },
+  deleteGuest(guest) {
+    return this.request(`/api/guests/delete${this.tokenParam()}`, {
+      method: "POST",
+      body: JSON.stringify({ guest })
+    });
+  },
+  clearGuests() {
+    return this.request(`/api/guests/clear${this.tokenParam()}`, { method: "POST", body: "{}" });
   },
   submitCheckin(record) {
     const isManual = record.signature === "Host-Manual-CheckIn";
@@ -228,6 +256,10 @@ function parseList(value) {
 function formatFieldList(value) {
   const fields = parseList(value);
   return fields.length ? fields.map((field) => fieldLabels[field] || field).join("、") : "";
+}
+
+function guestKey(guest) {
+  return [guest.unit || "", guest.title || "", guest.name || ""].join("\u001f");
 }
 
 function syncCheckboxGroup(groupName, csvValue) {
@@ -470,11 +502,12 @@ function renderGuestTable() {
     </tr>
   `).join(""));
 
-  setHtml("#settingsGuestTable", state.guests.map((guest) => `
+  setHtml("#settingsGuestTable", state.guests.map((guest, index) => `
     <tr>
       <td>${guest.unit}</td>
       <td>${guest.title}</td>
       <td><strong>${guest.name}</strong></td>
+      <td><button class="row-action" data-delete-guest="${index}" type="button">刪除</button></td>
     </tr>
   `).join(""));
   setText("#guestCountLabel", `${state.guests.length} 位`);
@@ -528,6 +561,22 @@ function renderPublishLinks() {
   if (checkinQr) checkinQr.src = getQrUrl(checkinUrl);
   if (hostQr) hostQr.src = getQrUrl(hostUrl);
   if (adminQr) adminQr.src = getQrUrl(adminUrl);
+}
+
+function renderGuestPicker() {
+  const list = $("#guestPickerList");
+  if (!list) return;
+  const keyword = ($("#guestPickerSearch")?.value || "").trim().toLowerCase();
+  const guests = state.guests.filter((guest) => {
+    if (!keyword) return true;
+    return [guest.unit, guest.title, guest.name].join(" ").toLowerCase().includes(keyword);
+  });
+  setHtml("#guestPickerList", guests.length ? guests.map((guest) => `
+    <button class="guest-picker-item" data-pick-guest="${encodeURIComponent(guestKey(guest))}" type="button">
+      <strong>${guest.name}</strong>
+      <span>${guest.unit || "未填單位"} · ${guest.title || "未填職稱"}</span>
+    </button>
+  `).join("") : `<div class="guest-picker-empty">找不到符合的名單</div>`);
 }
 
 function applyPageAccess() {
@@ -595,6 +644,19 @@ async function createRecord({ unit, title, name, extra1 = "", extra2 = "", signa
     extra2
   };
   state = normalizeState(await getDataService().submitCheckin(record));
+}
+
+function getCompressedSignature() {
+  const source = $("#signatureCanvas");
+  if (!source || !signatureDirty) return "";
+  const target = document.createElement("canvas");
+  target.width = 520;
+  target.height = 150;
+  const ctx = target.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, target.width, target.height);
+  ctx.drawImage(source, 0, 0, target.width, target.height);
+  return target.toDataURL("image/jpeg", 0.72);
 }
 
 function validateForm(formData) {
@@ -726,10 +788,25 @@ function bindEvents() {
   });
 
   $("#fillSampleButton")?.addEventListener("click", () => {
-    const guest = state.guests.find((item) => !getStats().arrivedNames.has(item.name)) || state.guests[0];
+    renderGuestPicker();
+    $("#guestPickerDialog")?.showModal();
+  });
+
+  $("#closeGuestPickerDialog")?.addEventListener("click", () => {
+    $("#guestPickerDialog")?.close();
+  });
+
+  $("#guestPickerSearch")?.addEventListener("input", renderGuestPicker);
+
+  $("#guestPickerList")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-pick-guest]");
+    if (!button) return;
+    const guest = state.guests.find((item) => guestKey(item) === decodeURIComponent(button.dataset.pickGuest));
+    if (!guest) return;
     $("#unitInput").value = guest.unit;
     $("#titleInput").value = guest.title;
     $("#nameInput").value = guest.name;
+    $("#guestPickerDialog")?.close();
   });
 
   $("#checkinForm")?.addEventListener("submit", async (event) => {
@@ -753,7 +830,7 @@ function bindEvents() {
         name: formData.get("name").trim(),
         extra1: formData.get("extra1")?.trim() || "",
         extra2: formData.get("extra2")?.trim() || "",
-        signature: signatureDirty ? $("#signatureCanvas").toDataURL("image/png") : ""
+        signature: getCompressedSignature()
       });
 
       form.reset();
@@ -799,6 +876,20 @@ function bindEvents() {
       }
     }
     $("#signatureDialog")?.showModal();
+  });
+
+  $("#settingsGuestTable")?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-delete-guest]");
+    if (!button) return;
+    const guest = state.guests[Number(button.dataset.deleteGuest)];
+    if (!guest || !confirm(`確定刪除 ${guest.name} 嗎？`)) return;
+    try {
+      state = normalizeState(await getDataService().deleteGuest(guest));
+      renderAll();
+      showToast("名單已刪除");
+    } catch (error) {
+      showError(error, "刪除名單失敗");
+    }
   });
 
   $("#closeSignatureDialog")?.addEventListener("click", () => {
@@ -901,6 +992,17 @@ function bindEvents() {
       showToast("簽到紀錄已清空");
     } catch (error) {
       showError(error, "清空紀錄失敗");
+    }
+  });
+
+  $("#clearGuestsButton")?.addEventListener("click", async () => {
+    if (!confirm("確定要清空名單嗎？簽到紀錄會保留。")) return;
+    try {
+      state = normalizeState(await getDataService().clearGuests());
+      renderAll();
+      showToast("名單已清空");
+    } catch (error) {
+      showError(error, "清空名單失敗");
     }
   });
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>管理設定</title>
-    <link rel="stylesheet" href="./styles.css?v=20260530-5">
+    <link rel="stylesheet" href="./styles.css?v=20260530-6">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   </head>
   <body>
@@ -202,9 +202,13 @@
               <i data-lucide="trash-2"></i>
               <span>清空紀錄</span>
             </button>
+            <button class="secondary-button" id="clearGuestsButton" type="button">
+              <i data-lucide="users-round"></i>
+              <span>清空名單</span>
+            </button>
             <button class="primary-button" id="importGuestButton" type="button">
               <i data-lucide="upload"></i>
-              <span>匯入名單</span>
+              <span>追加匯入</span>
             </button>
           </div>
         </div>
@@ -249,6 +253,7 @@
                 <th>單位</th>
                 <th>職稱</th>
                 <th>姓名</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody id="settingsGuestTable"></tbody>
@@ -257,7 +262,7 @@
       </section>
     </main>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./gas-adapter.js?v=20260530-5"></script>
-    <script src="./app.js?v=20260530-5"></script>
+    <script src="./gas-adapter.js?v=20260530-6"></script>
+    <script src="./app.js?v=20260530-6"></script>
   </body>
 </html>

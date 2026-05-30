@@ -113,14 +113,49 @@ export async function replaceGuests(DB, guests) {
   await DB.batch([DB.prepare("DELETE FROM guests"), ...inserts]);
 }
 
+export async function importGuests(DB, guests) {
+  const current = await getGuests(DB);
+  const seen = new Set(current.map(guestKey_));
+  const next = [...current];
+  for (const guest of guests || []) {
+    const normalized = normalizeGuest_(guest);
+    if (!normalized.name) continue;
+    const key = guestKey_(normalized);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(normalized);
+  }
+  await replaceGuests(DB, next);
+}
+
 export async function addGuest(DB, guest) {
-  const name = String(guest?.name || "").trim();
-  if (!name) throw new Error("請輸入姓名");
-  await DB.prepare("INSERT INTO guests (unit, title, name) VALUES (?, ?, ?)").bind(
-    String(guest.unit || "").trim(),
-    String(guest.title || "").trim(),
-    name
-  ).run();
+  const normalized = normalizeGuest_(guest);
+  if (!normalized.name) throw new Error("請輸入姓名");
+  const current = await getGuests(DB);
+  if (current.some((item) => guestKey_(item) === guestKey_(normalized))) return;
+  await DB.prepare("INSERT INTO guests (unit, title, name) VALUES (?, ?, ?)").bind(normalized.unit, normalized.title, normalized.name).run();
+}
+
+export async function deleteGuest(DB, guest) {
+  const normalized = normalizeGuest_(guest);
+  if (!normalized.name) throw new Error("請選擇要刪除的來賓");
+  await DB.prepare("DELETE FROM guests WHERE unit = ? AND title = ? AND name = ?").bind(normalized.unit, normalized.title, normalized.name).run();
+}
+
+export async function clearGuests(DB) {
+  await DB.prepare("DELETE FROM guests").run();
+}
+
+function normalizeGuest_(guest) {
+  return {
+    unit: String(guest?.unit || "").trim(),
+    title: String(guest?.title || "").trim(),
+    name: String(guest?.name || "").trim()
+  };
+}
+
+function guestKey_(guest) {
+  return [guest.unit || "", guest.title || "", guest.name || ""].join("\u001f");
 }
 
 export async function getRecords(DB) {

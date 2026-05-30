@@ -1,10 +1,13 @@
 import {
   addGuest,
   addRecord,
+  clearGuests,
+  deleteGuest,
   error,
   getRecords,
   getSettings,
   getState,
+  importGuests,
   readJson,
   replaceGuests,
   requireAdmin,
@@ -55,7 +58,20 @@ async function handleApi(request, env) {
   if (request.method === "POST" && path === "/api/guests/import") {
     await requireAdmin(env.DB, url.searchParams.get("token") || "");
     const body = await readJson(request);
-    await replaceGuests(env.DB, body.guests || []);
+    await importGuests(env.DB, body.guests || []);
+    return Response.json(await getState(env.DB, "admin"));
+  }
+
+  if (request.method === "POST" && path === "/api/guests/delete") {
+    await requireAdmin(env.DB, url.searchParams.get("token") || "");
+    const body = await readJson(request);
+    await deleteGuest(env.DB, body.guest || {});
+    return Response.json(await getState(env.DB, "admin"));
+  }
+
+  if (request.method === "POST" && path === "/api/guests/clear") {
+    await requireAdmin(env.DB, url.searchParams.get("token") || "");
+    await clearGuests(env.DB);
     return Response.json(await getState(env.DB, "admin"));
   }
 

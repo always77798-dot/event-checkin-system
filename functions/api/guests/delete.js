@@ -1,13 +1,13 @@
-import { error, getState, importGuests, readJson, requireAdmin } from "../../_lib/data.js";
+import { deleteGuest, error, getState, readJson, requireAdmin } from "../../_lib/data.js";
 
 export async function onRequestPost({ env, request }) {
   try {
     const url = new URL(request.url);
     await requireAdmin(env.DB, url.searchParams.get("token") || "");
     const body = await readJson(request);
-    await importGuests(env.DB, body.guests || []);
+    await deleteGuest(env.DB, body.guest || {});
     return Response.json(await getState(env.DB, "admin"));
   } catch (err) {
-    return error(err.message || "匯入來賓失敗", err.message?.includes("無權限") ? 403 : 400);
+    return error(err.message || "刪除名單失敗", err.message?.includes("無權限") ? 403 : 400);
   }
 }
