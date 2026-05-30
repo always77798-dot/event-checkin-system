@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>管理設定</title>
-    <link rel="stylesheet" href="./styles.css?v=20260530-4">
+    <link rel="stylesheet" href="./styles.css?v=20260530-5">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   </head>
   <body>
@@ -127,48 +127,66 @@
               <span>來賓簽到</span>
               <strong>給現場 QR Code 使用</strong>
             </div>
-            <img id="checkinQr" alt="來賓簽到 QR Code">
-            <input id="checkinUrl" readonly>
-            <button class="secondary-button copy-button" data-copy-target="checkinUrl" type="button">
-              <i data-lucide="copy"></i>
-              <span>複製</span>
-            </button>
-            <button class="secondary-button open-link-button" data-open-target="checkinUrl" type="button">
-              <i data-lucide="external-link"></i>
-              <span>前往</span>
-            </button>
+            <div class="link-card-body">
+              <img id="checkinQr" alt="來賓簽到 QR Code">
+              <div class="link-card-controls">
+                <input id="checkinUrl" readonly>
+                <div class="link-actions">
+                  <button class="secondary-button copy-button" data-copy-target="checkinUrl" type="button">
+                    <i data-lucide="copy"></i>
+                    <span>複製</span>
+                  </button>
+                  <button class="secondary-button open-link-button" data-open-target="checkinUrl" type="button">
+                    <i data-lucide="external-link"></i>
+                    <span>前往</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </article>
           <article class="link-card">
             <div>
               <span>主持人後台</span>
               <strong>給主辦端即時查看</strong>
             </div>
-            <img id="hostQr" alt="主持人後台 QR Code">
-            <input id="hostUrl" readonly>
-            <button class="secondary-button copy-button" data-copy-target="hostUrl" type="button">
-              <i data-lucide="copy"></i>
-              <span>複製</span>
-            </button>
-            <button class="secondary-button open-link-button" data-open-target="hostUrl" type="button">
-              <i data-lucide="external-link"></i>
-              <span>前往</span>
-            </button>
+            <div class="link-card-body">
+              <img id="hostQr" alt="主持人後台 QR Code">
+              <div class="link-card-controls">
+                <input id="hostUrl" readonly>
+                <div class="link-actions">
+                  <button class="secondary-button copy-button" data-copy-target="hostUrl" type="button">
+                    <i data-lucide="copy"></i>
+                    <span>複製</span>
+                  </button>
+                  <button class="secondary-button open-link-button" data-open-target="hostUrl" type="button">
+                    <i data-lucide="external-link"></i>
+                    <span>前往</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </article>
           <article class="link-card">
             <div>
               <span>管理設定</span>
               <strong>只給系統管理者保留</strong>
             </div>
-            <img id="adminQr" alt="管理設定 QR Code">
-            <input id="adminUrl" readonly>
-            <button class="secondary-button copy-button" data-copy-target="adminUrl" type="button">
-              <i data-lucide="copy"></i>
-              <span>複製</span>
-            </button>
-            <button class="secondary-button open-link-button" data-open-target="adminUrl" type="button">
-              <i data-lucide="external-link"></i>
-              <span>前往</span>
-            </button>
+            <div class="link-card-body">
+              <img id="adminQr" alt="管理設定 QR Code">
+              <div class="link-card-controls">
+                <input id="adminUrl" readonly>
+                <div class="link-actions">
+                  <button class="secondary-button copy-button" data-copy-target="adminUrl" type="button">
+                    <i data-lucide="copy"></i>
+                    <span>複製</span>
+                  </button>
+                  <button class="secondary-button open-link-button" data-open-target="adminUrl" type="button">
+                    <i data-lucide="external-link"></i>
+                    <span>前往</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -239,7 +257,7 @@
       </section>
     </main>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./gas-adapter.js?v=20260530-4"></script>
-    <script src="./app.js?v=20260530-4"></script>
+    <script src="./gas-adapter.js?v=20260530-5"></script>
+    <script src="./app.js?v=20260530-5"></script>
   </body>
 </html>

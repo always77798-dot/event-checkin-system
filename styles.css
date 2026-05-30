@@ -819,7 +819,7 @@ textarea:focus {
 
 .link-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -844,12 +844,31 @@ textarea:focus {
 }
 
 .link-card img {
-  width: 136px;
-  height: 136px;
+  width: 104px;
+  height: 104px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px;
+}
+
+.link-card-body {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.link-card-controls {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .copy-button,
@@ -996,6 +1015,7 @@ textarea:focus {
 
   .field-grid,
   .settings-grid,
+  .link-grid,
   .metric-stack,
   .dashboard-grid,
   .check-grid {
@@ -1042,9 +1062,12 @@ textarea:focus {
   }
 
   .link-card img {
-    justify-self: center;
-    width: 180px;
-    height: 180px;
+    width: 96px;
+    height: 96px;
+  }
+
+  .link-card-body {
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 
   .metric-card strong {

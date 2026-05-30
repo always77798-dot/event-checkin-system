@@ -56,7 +56,10 @@ export async function getSettings(DB) {
 
 export async function saveSettings(DB, settings) {
   const current = await readSettings_(DB);
-  const next = { ...DEFAULT_SETTINGS, ...current, ...(settings || {}) };
+  var incoming = { ...(settings || {}) };
+  if (current.hostToken && !String(incoming.hostToken || "").trim()) delete incoming.hostToken;
+  if (current.adminToken && !String(incoming.adminToken || "").trim()) delete incoming.adminToken;
+  const next = { ...DEFAULT_SETTINGS, ...current, ...incoming };
   next.requiredFields = removeHiddenRequiredFields_(next.requiredFields, next.hiddenFields);
   next.isOpen = next.isOpen ? "true" : "false";
   const entries = Object.entries(next).map(([key, value]) => [

@@ -299,7 +299,7 @@ function getPageUrl(fileName, params = {}) {
 }
 
 function getQrUrl(text) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(text)}`;
+  return `https://quickchart.io/qr?size=220&text=${encodeURIComponent(text)}`;
 }
 
 function normalizeSignaturePreview(signature) {
@@ -389,8 +389,8 @@ function applySettingsToUi() {
   syncCheckboxGroup("required", settings.requiredFields);
   syncCheckboxGroup("hidden", settings.hiddenFields);
   setValue("#settingAuthCode", settings.authCode);
-  setValue("#settingHostToken", settings.hostToken);
-  setValue("#settingAdminToken", settings.adminToken);
+  if (settings.hostToken) setValue("#settingHostToken", settings.hostToken);
+  if (settings.adminToken || getUrlToken()) setValue("#settingAdminToken", settings.adminToken || getUrlToken());
   setValue("#settingExtra1", settings.extra1Label);
   setValue("#settingExtra2", settings.extra2Label);
 }
@@ -511,21 +511,23 @@ function renderRecordTable() {
 }
 
 function renderPublishLinks() {
-  if (!$("#checkinUrl")) return;
   const checkinUrl = getPageUrl("checkin.html", { code: state.settings.authCode });
   const hostUrl = getPageUrl("host.html", { token: state.settings.hostToken });
   const adminUrl = getPageUrl("admin.html", { token: state.settings.adminToken });
+  const checkinPageQr = $("#checkinPageQr");
+  if (checkinPageQr) {
+    checkinPageQr.src = getQrUrl(window.location.href);
+  }
+  if (!$("#checkinUrl")) return;
   setValue("#checkinUrl", checkinUrl);
   setValue("#hostUrl", hostUrl);
   setValue("#adminUrl", adminUrl);
   const checkinQr = $("#checkinQr");
   const hostQr = $("#hostQr");
   const adminQr = $("#adminQr");
-  const checkinPageQr = $("#checkinPageQr");
   if (checkinQr) checkinQr.src = getQrUrl(checkinUrl);
   if (hostQr) hostQr.src = getQrUrl(hostUrl);
   if (adminQr) adminQr.src = getQrUrl(adminUrl);
-  if (checkinPageQr) checkinPageQr.src = getQrUrl(checkinUrl);
 }
 
 function applyPageAccess() {
@@ -808,6 +810,12 @@ function bindEvents() {
     const formData = new FormData(event.currentTarget);
     const hiddenFields = readCheckboxGroup("hidden");
     const requiredFields = subtractCsv(readCheckboxGroup("required"), hiddenFields);
+    const hostToken = String(formData.get("hostToken") || "").trim();
+    const adminToken = String(formData.get("adminToken") || "").trim();
+    if (!hostToken || !adminToken) {
+      showToast("主持人與管理者權杖不可空白，請重新整理後再儲存");
+      return;
+    }
     setValue("#settingRequired", requiredFields);
     setValue("#settingHidden", hiddenFields);
     try {
@@ -819,8 +827,8 @@ function bindEvents() {
         requiredFields,
         hiddenFields,
         authCode: formData.get("authCode"),
-        hostToken: formData.get("hostToken"),
-        adminToken: formData.get("adminToken"),
+        hostToken,
+        adminToken,
         extra1Label: formData.get("extra1Label"),
         extra2Label: formData.get("extra2Label")
       }));
