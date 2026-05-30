@@ -137,7 +137,7 @@ export default {
       if (url.pathname.startsWith("/api/")) {
         return await handleApi(request, env);
       }
-      return env.ASSETS.fetch(request);
+      return env.SITE_ASSETS.fetch(request);
     } catch (err) {
       const status = err.message?.includes("無權限") ? 403 : 500;
       return error(err.message || "伺服器發生錯誤", status);
