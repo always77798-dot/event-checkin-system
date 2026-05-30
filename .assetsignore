@@ -1,0 +1,10 @@
+functions/
+gas/
+src/
+.git/
+*.md
+*.sql
+wrangler.toml
+GAS_DEPLOYMENT.md
+DEPLOYMENT_GUIDE.md
+CLOUDFLARE_D1_GUIDE.md

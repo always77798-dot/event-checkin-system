@@ -21,12 +21,12 @@ git remote add origin https://github.com/你的帳號/event-checkin-system.git
 git push -u origin main
 ```
 
-## 2. 建立 Cloudflare Pages 專案
+## 2. 建立 Cloudflare Pages / Workers 專案
 
 1. 進入 Cloudflare Dashboard。
 2. 開啟 `Workers & Pages`。
 3. 點 `Create application`。
-4. 選 `Pages`。
+4. 選 `Pages` 或以 Cloudflare 自動偵測的 Workers + Assets 模式部署。
 5. 選 `Connect to Git`。
 6. 選你的 GitHub repo。
 7. 設定：
@@ -40,6 +40,8 @@ Production branch: main
 
 8. 點 `Save and Deploy`。
 
+如果第一次部署出現「Missing entry-point to Worker script or assets directory」之類錯誤，先不用重建專案。請繼續完成 D1 建立，然後把最新版 repo 推上 GitHub；目前專案已包含 `src/index.js`、`[assets]` 與 `.assetsignore`，可支援 Cloudflare 的 Workers + Assets 部署流程。
+
 ## 3. 建立 D1 資料庫
 
 1. 在 Cloudflare Dashboard 進入 `Workers & Pages`。
@@ -52,7 +54,7 @@ event-checkin-system
 ```
 
 5. 建立後，Cloudflare 會顯示 database id。
-6. 把 `wrangler.toml` 內這行換成你的 database id：
+6. 把 `wrangler.toml` 內這行換成你的 database id。這一步完成前，不要急著重新部署，因為 placeholder id 不能連到真正資料庫：
 
 ```toml
 database_id = "replace-with-cloudflare-d1-database-id"

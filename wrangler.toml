@@ -1,8 +1,14 @@
 name = "event-checkin-system"
+main = "src/index.js"
 compatibility_date = "2026-05-30"
 pages_build_output_dir = "."
+
+[assets]
+directory = "."
+binding = "ASSETS"
+not_found_handling = "404-page"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "event-checkin-system"
-database_id = "replace-with-cloudflare-d1-database-id"
+database_id = "c44e4514-b2f8-43e9-bcfc-1a0fd51f4293"
